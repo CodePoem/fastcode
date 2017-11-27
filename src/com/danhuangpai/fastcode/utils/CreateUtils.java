@@ -51,13 +51,15 @@ public class CreateUtils {
         // 将需要生成的方法写在StringBuilder里
         StringBuilder methodStringBuilder = new StringBuilder();
         int size = showSelectModels.size();
-        //如果时父类 插入@Override 和 super
+        //如果是继承父类方法或实现接口方法 插入@Override
         boolean isParentMethod = isSupperMethod(methodCreator.getmTargetClass(), methodCreator.getSetPsiMethod());
-        if (isParentMethod) {
+        boolean isInterfaceMethod = isInterfaceMethod(methodCreator.getSetPsiMethod());
+        if (isParentMethod || isInterfaceMethod) {
             methodStringBuilder.append("@Override\n");
         }
         methodStringBuilder.append("public void setAttribute(String attributeName,Object value){\n");
-        if (isParentMethod) {
+        //继承父类方法插入super
+        if (isParentMethod && !isInterfaceMethod) {
             methodStringBuilder.append("\tsuper.setAttribute(attributeName,value);\n");
         }
         for (int i = 0; i < showSelectModels.size(); i++) {
@@ -81,13 +83,15 @@ public class CreateUtils {
         // 将需要生成的方法写在StringBuilder里
         StringBuilder methodStringBuilder = new StringBuilder();
         int size = showSelectModels.size();
-        //如果时父类 插入@Override 和 super
+        //如果是继承父类方法或实现接口方法 插入@Override
         boolean isParentMethod = isSupperMethod(methodCreator.getmTargetClass(), methodCreator.getGetPsiMethod());
-        if (isParentMethod) {
+        boolean isInterfaceMethod = isInterfaceMethod(methodCreator.getGetPsiMethod());
+        if (isParentMethod || isInterfaceMethod) {
             methodStringBuilder.append("@Override\n");
         }
         methodStringBuilder.append("public Object getAttribute(String attributeName){\n");
-        if (isParentMethod) {
+        //继承父类方法插入super
+        if (isParentMethod && !isInterfaceMethod) {
             methodStringBuilder.append("\tsuper.getAttribute(attributeName);\n");
         }
         for (int i = 0; i < showSelectModels.size(); i++) {
@@ -175,32 +179,34 @@ public class CreateUtils {
         int repeatParameterNum = 0;
         //遍历方法
         for (PsiMethod method : methods) {
-            if (isSupperMethod(mTargetClass, method)) {
-                if (methodName.equals(method.getNameIdentifier().getText())) {
-                    PsiParameterList psiParameters = method.getParameterList();
-                    int parametersCount = psiParameters.getParametersCount();
-                    PsiParameter[] parameters = psiParameters.getParameters();
-                    if (parametersCount != 2) {
-                        continue;
+            if (methodName.equals(method.getNameIdentifier().getText())) {
+                PsiParameterList psiParameters = method.getParameterList();
+                int parametersCount = psiParameters.getParametersCount();
+                PsiParameter[] parameters = psiParameters.getParameters();
+                if (parametersCount != 2) {
+                    continue;
+                }
+                if (parameters[0] != null) {
+                    PsiTypeElement typeElement = parameters[0].getTypeElement();
+                    String typeName = typeElement.getInnermostComponentReferenceElement().getText();
+                    if ("String".equals(typeName)) {
+                        repeatParameterNum++;
                     }
-                    if (parameters[0] != null) {
-                        PsiTypeElement typeElement = parameters[0].getTypeElement();
-                        String typeName = typeElement.getInnermostComponentReferenceElement().getText();
-                        if ("String".equals(typeName)) {
-                            repeatParameterNum++;
-                        }
+                }
+                if (parameters[1] != null) {
+                    PsiTypeElement typeElement = parameters[1].getTypeElement();
+                    String typeName = typeElement.getInnermostComponentReferenceElement().getText();
+                    if ("Object".equals(typeName)) {
+                        repeatParameterNum++;
                     }
-                    if (parameters[1] != null) {
-                        PsiTypeElement typeElement = parameters[1].getTypeElement();
-                        String typeName = typeElement.getInnermostComponentReferenceElement().getText();
-                        if ("Object".equals(typeName)) {
-                            repeatParameterNum++;
-                        }
-                    }
-                    if (repeatParameterNum == 2) {
+                }
+                if (repeatParameterNum == 2) {
+                    //如果是继承得来或是实现接口得来的 就缓存方法
+                    if (isSupperMethod(mTargetClass, method) || isInterfaceMethod(method)) {
                         methodCreator.setSetPsiMethod(method);
-                        return true;
+                        return false;
                     }
+                    return true;
                 }
             }
         }
@@ -219,25 +225,27 @@ public class CreateUtils {
         int repeatParameterNum = 0;
         //遍历方法
         for (PsiMethod method : methods) {
-            if (isSupperMethod(mTargetClass, method)) {
-                if (methodName.equals(method.getNameIdentifier().getText())) {
-                    PsiParameterList psiParameters = method.getParameterList();
-                    int parametersCount = psiParameters.getParametersCount();
-                    PsiParameter[] parameters = psiParameters.getParameters();
-                    if (parametersCount != 1) {
-                        continue;
+            if (methodName.equals(method.getNameIdentifier().getText())) {
+                PsiParameterList psiParameters = method.getParameterList();
+                int parametersCount = psiParameters.getParametersCount();
+                PsiParameter[] parameters = psiParameters.getParameters();
+                if (parametersCount != 1) {
+                    continue;
+                }
+                if (parameters[0] != null) {
+                    PsiTypeElement typeElement = parameters[0].getTypeElement();
+                    String typeName = typeElement.getInnermostComponentReferenceElement().getText();
+                    if ("String".equals(typeName)) {
+                        repeatParameterNum++;
                     }
-                    if (parameters[0] != null) {
-                        PsiTypeElement typeElement = parameters[0].getTypeElement();
-                        String typeName = typeElement.getInnermostComponentReferenceElement().getText();
-                        if ("String".equals(typeName)) {
-                            repeatParameterNum++;
-                        }
-                    }
-                    if (repeatParameterNum == 1) {
+                }
+                if (repeatParameterNum == 1) {
+                    //如果是继承得来或是实现接口得来的 就缓存方法
+                    if (isSupperMethod(mTargetClass, method) || isInterfaceMethod(method)) {
                         methodCreator.setGetPsiMethod(method);
-                        return true;
+                        return false;
                     }
+                    return true;
                 }
             }
         }
@@ -249,13 +257,33 @@ public class CreateUtils {
      *
      * @param mTargetClass 判断类
      * @param method       类方法
-     * @return true 父类方法 false 本类方法
+     * @return true：非本类方法 false：本类方法
      */
     public static boolean isSupperMethod(PsiClass mTargetClass, PsiMethod method) {
         if (method == null) {
             return false;
         }
+        if (isInterfaceMethod(method)) {
+            return false;
+        }
         return !mTargetClass.equals(method.getContainingClass());
+    }
+
+    /**
+     * 判断目标方法是否是实现接口
+     *
+     * @param method 目标方法
+     * @return true：实现接口 false：非实现接口
+     */
+    public static boolean isInterfaceMethod(PsiMethod method) {
+        if (method == null) {
+            return false;
+        }
+        PsiClass psiClass = method.getContainingClass();
+        if (psiClass == null) {
+            return false;
+        }
+        return psiClass.isInterface();
     }
 
 }
