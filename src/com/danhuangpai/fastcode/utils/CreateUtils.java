@@ -2,6 +2,7 @@ package com.danhuangpai.fastcode.utils;
 
 import com.danhuangpai.fastcode.model.ShowSelectModel;
 import com.danhuangpai.fastcode.setting.Constant;
+import com.danhuangpai.fastcode.struct.MethodCreator;
 import com.intellij.psi.*;
 
 import java.util.ArrayList;
@@ -46,12 +47,19 @@ public class CreateUtils {
      * @param showSelectModels 需要构建的属性对象列表
      * @return 构建字符串
      */
-    public static String createSetAttributeMethodContent(List<ShowSelectModel> showSelectModels) {
+    public static String createSetAttributeMethodContent(MethodCreator methodCreator, List<ShowSelectModel> showSelectModels) {
         // 将需要生成的方法写在StringBuilder里
         StringBuilder methodStringBuilder = new StringBuilder();
         int size = showSelectModels.size();
-        methodStringBuilder.append("public void setAttribute(String attributeName,Object value){");
-
+        //如果时父类 插入@Override 和 super
+        boolean isParentMethod = isSupperMethod(methodCreator.getmTargetClass(), methodCreator.getSetPsiMethod());
+        if (isParentMethod) {
+            methodStringBuilder.append("@Override\n");
+        }
+        methodStringBuilder.append("public void setAttribute(String attributeName,Object value){\n");
+        if (isParentMethod) {
+            methodStringBuilder.append("\tsuper.setAttribute(attributeName,value);\n");
+        }
         for (int i = 0; i < showSelectModels.size(); i++) {
             if (i != 0) {
                 methodStringBuilder.append(" else ");
@@ -68,12 +76,20 @@ public class CreateUtils {
      * @param showSelectModels 需要构建的属性对象列表
      * @return 构建字符串
      */
-    public static String createGetAttributeMethodContent(List<ShowSelectModel> showSelectModels) {
+
+    public static String createGetAttributeMethodContent(MethodCreator methodCreator, List<ShowSelectModel> showSelectModels) {
         // 将需要生成的方法写在StringBuilder里
         StringBuilder methodStringBuilder = new StringBuilder();
         int size = showSelectModels.size();
-        methodStringBuilder.append("public Object getAttribute(String attributeName){");
-
+        //如果时父类 插入@Override 和 super
+        boolean isParentMethod = isSupperMethod(methodCreator.getmTargetClass(), methodCreator.getGetPsiMethod());
+        if (isParentMethod) {
+            methodStringBuilder.append("@Override\n");
+        }
+        methodStringBuilder.append("public Object getAttribute(String attributeName){\n");
+        if (isParentMethod) {
+            methodStringBuilder.append("\tsuper.getAttribute(attributeName);\n");
+        }
         for (int i = 0; i < showSelectModels.size(); i++) {
             if (i != 0) {
                 methodStringBuilder.append(" else ");
@@ -148,42 +164,98 @@ public class CreateUtils {
     }
 
     /**
-     * 判断方法名重复
+     * 是否包含SetAttribute方法
      *
      * @param mTargetClass 当前类
      * @param methodName   方法名
-     * @return true：repeat false：no repeat
+     * @return true 包含 false不包含
      */
-    public static boolean isRepeatMethod(PsiClass mTargetClass, String methodName) {
+    public static boolean containsSetAttributeAtMethod(MethodCreator methodCreator, PsiClass mTargetClass, String methodName) {
+        PsiMethod methods[] = mTargetClass.getAllMethods();
         int repeatParameterNum = 0;
-        //获取当前类所有的方法
-        PsiMethod[] methods = mTargetClass.getAllMethods();
         //遍历方法
         for (PsiMethod method : methods) {
-            if (methodName.equals(method.getNameIdentifier().getText())) {
-                PsiParameterList psiParameters = method.getParameterList();
-                int parametersCount = psiParameters.getParametersCount();
-                PsiParameter[] parameters = psiParameters.getParameters();
-                if (parameters[0] != null) {
-                    PsiTypeElement typeElement = parameters[0].getTypeElement();
-                    String typeName = typeElement.getInnermostComponentReferenceElement().getText();
-                    if ("String".equals(typeName)) {
-                        repeatParameterNum++;
+            if (isSupperMethod(mTargetClass, method)) {
+                if (methodName.equals(method.getNameIdentifier().getText())) {
+                    PsiParameterList psiParameters = method.getParameterList();
+                    int parametersCount = psiParameters.getParametersCount();
+                    PsiParameter[] parameters = psiParameters.getParameters();
+                    if (parametersCount != 2) {
+                        continue;
                     }
-                }
-                if (parameters[1] != null) {
-                    PsiTypeElement typeElement = parameters[1].getTypeElement();
-                    String typeName = typeElement.getInnermostComponentReferenceElement().getText();
-                    if ("Object".equals(typeName)) {
-                        repeatParameterNum++;
+                    if (parameters[0] != null) {
+                        PsiTypeElement typeElement = parameters[0].getTypeElement();
+                        String typeName = typeElement.getInnermostComponentReferenceElement().getText();
+                        if ("String".equals(typeName)) {
+                            repeatParameterNum++;
+                        }
                     }
-                }
-                if (parametersCount == 2 && repeatParameterNum == 2) {
-                    return true;
+                    if (parameters[1] != null) {
+                        PsiTypeElement typeElement = parameters[1].getTypeElement();
+                        String typeName = typeElement.getInnermostComponentReferenceElement().getText();
+                        if ("Object".equals(typeName)) {
+                            repeatParameterNum++;
+                        }
+                    }
+                    if (repeatParameterNum == 2) {
+                        methodCreator.setSetPsiMethod(method);
+                        return true;
+                    }
                 }
             }
         }
         return false;
+    }
+
+    /**
+     * 是否包含GetAttribute方法
+     *
+     * @param mTargetClass 当前类
+     * @param methodName   方法名
+     * @return true 包含 false不包含
+     */
+    public static boolean containGetAttributeAtMethod(MethodCreator methodCreator, PsiClass mTargetClass, String methodName) {
+        PsiMethod methods[] = mTargetClass.getAllMethods();
+        int repeatParameterNum = 0;
+        //遍历方法
+        for (PsiMethod method : methods) {
+            if (isSupperMethod(mTargetClass, method)) {
+                if (methodName.equals(method.getNameIdentifier().getText())) {
+                    PsiParameterList psiParameters = method.getParameterList();
+                    int parametersCount = psiParameters.getParametersCount();
+                    PsiParameter[] parameters = psiParameters.getParameters();
+                    if (parametersCount != 1) {
+                        continue;
+                    }
+                    if (parameters[0] != null) {
+                        PsiTypeElement typeElement = parameters[0].getTypeElement();
+                        String typeName = typeElement.getInnermostComponentReferenceElement().getText();
+                        if ("String".equals(typeName)) {
+                            repeatParameterNum++;
+                        }
+                    }
+                    if (repeatParameterNum == 1) {
+                        methodCreator.setGetPsiMethod(method);
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * 判断是否是父类中的方法
+     *
+     * @param mTargetClass 判断类
+     * @param method       类方法
+     * @return true 父类方法 false 本类方法
+     */
+    public static boolean isSupperMethod(PsiClass mTargetClass, PsiMethod method) {
+        if (method == null) {
+            return false;
+        }
+        return !mTargetClass.equals(method.getContainingClass());
     }
 
 }
