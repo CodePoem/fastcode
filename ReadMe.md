@@ -1,1 +1,2 @@
-** a simple plugin to generate code quickly
+# Short introduction
+a simple plugin to generate code quickly.
