@@ -56,22 +56,44 @@ public class CreateUtils {
             if (i != 0) {
                 methodStringBuilder.append(" else ");
             }
-            appendFeild(methodStringBuilder, showSelectModels.get(i).getmFieldName(), showSelectModels.get(i).getType());
+            appendSetAttributeFeild(methodStringBuilder, showSelectModels.get(i).getmFieldName(), showSelectModels.get(i).getType());
         }
-
         methodStringBuilder.append("\n}\n");
         return methodStringBuilder.toString();
     }
 
     /**
-     * 构造一个属性判断设置内容
+     * 构建getAttribute方法内容
+     *
+     * @param showSelectModels 需要构建的属性对象列表
+     * @return 构建字符串
+     */
+    public static String createGetAttributeMethodContent(List<ShowSelectModel> showSelectModels) {
+        // 将需要生成的方法写在StringBuilder里
+        StringBuilder methodStringBuilder = new StringBuilder();
+        int size = showSelectModels.size();
+        methodStringBuilder.append("public Object getAttribute(String attributeName){");
+
+        for (int i = 0; i < showSelectModels.size(); i++) {
+            if (i != 0) {
+                methodStringBuilder.append(" else ");
+            }
+            appendGetAttributeFeild(methodStringBuilder, showSelectModels.get(i).getmFieldName());
+        }
+        methodStringBuilder.append("\nreturn null;");
+        methodStringBuilder.append("\n}\n");
+        return methodStringBuilder.toString();
+    }
+
+    /**
+     * 构造一个SetAttribute属性判断设置内容
      *
      * @param methodStringBuilder 添加前构造内容StringBuilder
      * @param feildName           属性名
      * @param typeName            类型名
      * @return 添加后构造内容StringBuilder
      */
-    public static StringBuilder appendFeild(StringBuilder methodStringBuilder, String feildName, String typeName) {
+    public static StringBuilder appendSetAttributeFeild(StringBuilder methodStringBuilder, String feildName, String typeName) {
         String upFeildName = captureName(feildName);
         methodStringBuilder.append("if (\"");
         methodStringBuilder.append(feildName);
@@ -86,6 +108,25 @@ public class CreateUtils {
     }
 
     /**
+     * 构造一个GetAttribute属性判断设置内容
+     *
+     * @param methodStringBuilder 添加前构造内容StringBuilder
+     * @param feildName           属性名
+     * @return 添加后构造内容StringBuilder
+     */
+    public static StringBuilder appendGetAttributeFeild(StringBuilder methodStringBuilder, String feildName) {
+        String upFeildName = captureName(feildName);
+        methodStringBuilder.append("if (\"");
+        methodStringBuilder.append(feildName);
+        methodStringBuilder.append("\".equals(attributeName)){\n");
+        methodStringBuilder.append("\treturn get");
+        methodStringBuilder.append(upFeildName);
+        methodStringBuilder.append("();\n");
+        methodStringBuilder.append("}");
+        return methodStringBuilder;
+    }
+
+    /**
      * 首字母大写
      *
      * @param name 变换前字符串
@@ -93,6 +134,17 @@ public class CreateUtils {
      */
     public static String captureName(String name) {
         return name.substring(0, 1).toUpperCase() + name.substring(1);
+    }
+
+    /**
+     * 文件名去掉文件后缀
+     *
+     * @param name 变换前文件名字符串
+     * @return 变换后文件名字符串
+     */
+    public static String deteleFileExtension(String name) {
+        String afterNames[] = name.split("\\.");
+        return afterNames[0];
     }
 
     /**

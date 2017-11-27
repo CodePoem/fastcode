@@ -12,7 +12,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 
 import java.util.List;
 
-public class SetAttributeCreator extends WriteCommandAction.Simple {
+public class MethodCreator extends WriteCommandAction.Simple {
 
     private Project mProject;
     private PsiFile mFile;
@@ -24,14 +24,14 @@ public class SetAttributeCreator extends WriteCommandAction.Simple {
 
     private List<ShowSelectModel> mShowSelectModels;
 
-    protected SetAttributeCreator(Project project, String commandName, PsiFile... files) {
+    protected MethodCreator(Project project, String commandName, PsiFile... files) {
         super(project, commandName, files);
         this.mProject = project;
         this.mCommandName = commandName;
         this.mFile = files[0];
     }
 
-    protected SetAttributeCreator(Project project, String name, String groupID, PsiFile... files) {
+    protected MethodCreator(Project project, String name, String groupID, PsiFile... files) {
         super(project, name, groupID, files);
         this.mProject = project;
         this.mName = name;
@@ -39,7 +39,7 @@ public class SetAttributeCreator extends WriteCommandAction.Simple {
         this.mFile = files[0];
     }
 
-    public SetAttributeCreator(List<ShowSelectModel> showSelectModels,Project project, PsiClass targetClass, PsiElementFactory factory, PsiFile... files) {
+    public MethodCreator(List<ShowSelectModel> showSelectModels, Project project, PsiClass targetClass, PsiElementFactory factory, PsiFile... files) {
         super(project, files);
         this.mShowSelectModels = showSelectModels;
         this.mProject = project;
@@ -56,14 +56,18 @@ public class SetAttributeCreator extends WriteCommandAction.Simple {
         List<PsiField> psiFieldList = CreateUtils.filterPsiField(fields);
 
         // 生成模版代码
-        String methodString = CreateUtils.createSetAttributeMethodContent(mShowSelectModels);
+        String setAttributeMethodString = CreateUtils.createSetAttributeMethodContent(mShowSelectModels);
+        String getAttributeMethodString = CreateUtils.createGetAttributeMethodContent(mShowSelectModels);
 
         // 将代码添加到当前类里
-        mTargetClass.add(mFactory.createMethodFromText(methodString, mTargetClass));
+        mTargetClass.add(mFactory.createMethodFromText(setAttributeMethodString, mTargetClass));
+        mTargetClass.add(mFactory.createMethodFromText(getAttributeMethodString, mTargetClass));
 
         // 导入需要的类
         JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(mProject);
         styleManager.optimizeImports(mFile);
         styleManager.shortenClassReferences(mTargetClass);
     }
+
+
 }
