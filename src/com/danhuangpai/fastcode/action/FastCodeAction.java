@@ -16,6 +16,12 @@ import com.intellij.psi.util.PsiUtilBase;
 
 import javax.swing.*;
 
+/**
+ * 插件程序入口类
+ *
+ * @author danhuangpai
+ * @version 1.0.0 created at 2017/12/4 16:54
+ */
 public class FastCodeAction extends BaseGenerateAction {
 
     protected JFrame mDialog;

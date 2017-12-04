@@ -9,6 +9,12 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 
 import java.util.List;
 
+/**
+ * 方法构造器类
+ *
+ * @author danhuangpai
+ * @version 1.0.0 created at 2017/12/4 16:59
+ */
 public class MethodCreator extends WriteCommandAction.Simple {
 
     private Project mProject;
@@ -84,13 +90,13 @@ public class MethodCreator extends WriteCommandAction.Simple {
         List<PsiField> psiFieldList = CreateUtils.filterPsiField(fields);
 
         if (!isContainsGetMethod) {
-            // 生成模版代码
+            // 生成getAttribute方法模版代码
             String getAttributeMethodString = CreateUtils.createGetAttributeMethodContent(this, mShowSelectModels);
             // 将代码添加到当前类里
             mTargetClass.add(mFactory.createMethodFromText(getAttributeMethodString, mTargetClass));
         }
         if (!isContainsSetMethod) {
-            // 生成模版代码
+            // 生成setAttribute模版代码
             String setAttributeMethodString = CreateUtils.createSetAttributeMethodContent(this, mShowSelectModels);
             // 将代码添加到当前类里
             mTargetClass.add(mFactory.createMethodFromText(setAttributeMethodString, mTargetClass));

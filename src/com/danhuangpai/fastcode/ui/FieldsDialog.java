@@ -3,6 +3,7 @@ package com.danhuangpai.fastcode.ui;
 
 import com.danhuangpai.fastcode.model.MyAbstractTableModel;
 import com.danhuangpai.fastcode.model.ShowSelectModel;
+import com.danhuangpai.fastcode.struct.FieldsCreator;
 import com.danhuangpai.fastcode.struct.MethodCreator;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -11,7 +12,14 @@ import javax.swing.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.ListIterator;
 
+/**
+ * 属性字段选择对话框类
+ *
+ * @author danhuangpai
+ * @version 1.0.0 created at 2017/12/4 16:59
+ */
 public class FieldsDialog extends JDialog {
     private JPanel contentPane;
     private JPanel fieldPanel;
@@ -92,12 +100,14 @@ public class FieldsDialog extends JDialog {
         getRootPane().setDefaultButton(buttonOK);
 
         buttonCancel.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 onCancel();
             }
         });
 
         buttonOK.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 onOK();
             }
@@ -106,6 +116,7 @@ public class FieldsDialog extends JDialog {
         // call onCancel() when cross is clicked
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
         addWindowListener(new WindowAdapter() {
+            @Override
             public void windowClosing(WindowEvent e) {
                 onCancel();
             }
@@ -113,6 +124,7 @@ public class FieldsDialog extends JDialog {
 
         // call onCancel() on ESCAPE
         contentPane.registerKeyboardAction(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
                 onCancel();
             }
@@ -124,7 +136,9 @@ public class FieldsDialog extends JDialog {
         // add your code here
         //对勾选操作 过滤属性数据
         makeSureShowList();
-        // 生成代码
+        // 生成属性静态字符串变量
+        new FieldsCreator(mShowSelectModels, mProject, mTargetClass, mFactory, mFile).execute();
+        // 生成方法代码
         new MethodCreator(mShowSelectModels, mProject, mTargetClass, mFactory, mFile).execute();
         dispose();
     }
@@ -135,18 +149,20 @@ public class FieldsDialog extends JDialog {
     }
 
     private void makeSureShowList() {
-        int size = mShowSelectModels.size();
-        for (int i = 0; i < size; i++) {
-            Boolean checked = (Boolean) mAbstractTableModel.getValueAt(i, 0);
+        ListIterator<ShowSelectModel> it = mShowSelectModels.listIterator();
+        int currentIndex = 0;
+        while (it.hasNext()) {
+            ShowSelectModel tempShowSelectModel = it.next();
+            Boolean checked = (Boolean) mAbstractTableModel.getValueAt(currentIndex, 0);
+            currentIndex++;
             if (!checked) {
-                mShowSelectModels.remove(i);
+                it.remove();
             }
         }
     }
 
     public static void main(String[] args) {
         FieldsDialog dialog = new FieldsDialog();
-        //dialog.pack();
         dialog.setSize(800, 500);
         dialog.setLocationRelativeTo(null);
         dialog.setVisible(true);

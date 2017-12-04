@@ -2,6 +2,7 @@ package com.danhuangpai.fastcode.utils;
 
 import com.danhuangpai.fastcode.model.ShowSelectModel;
 import com.danhuangpai.fastcode.setting.Constant;
+import com.danhuangpai.fastcode.struct.FieldsCreator;
 import com.danhuangpai.fastcode.struct.MethodCreator;
 import com.intellij.psi.*;
 
@@ -42,15 +43,28 @@ public class CreateUtils {
     }
 
     /**
+     * 构建静态字符串变量
+     *
+     * @param fieldsCreator 属性字段构造器
+     * @param feildName     需要构建的属性字段名
+     * @return 构建字符串
+     */
+    public static String createStaticFinalField(FieldsCreator fieldsCreator, String feildName) {
+        StringBuilder feildStringBuilder = new StringBuilder();
+        feildStringBuilder.append("private static final String ATTRIBUTE_" + feildName.toUpperCase() + " = \"" + feildName + "\";");
+        return feildStringBuilder.toString();
+    }
+
+    /**
      * 构建setAttribute方法内容
      *
+     * @param methodCreator    方法构造器
      * @param showSelectModels 需要构建的属性对象列表
      * @return 构建字符串
      */
     public static String createSetAttributeMethodContent(MethodCreator methodCreator, List<ShowSelectModel> showSelectModels) {
         // 将需要生成的方法写在StringBuilder里
         StringBuilder methodStringBuilder = new StringBuilder();
-        int size = showSelectModels.size();
         //如果是继承父类方法或实现接口方法 插入@Override
         boolean isParentMethod = isSupperMethod(methodCreator.getmTargetClass(), methodCreator.getSetPsiMethod());
         boolean isInterfaceMethod = isInterfaceMethod(methodCreator.getSetPsiMethod());
@@ -75,6 +89,7 @@ public class CreateUtils {
     /**
      * 构建getAttribute方法内容
      *
+     * @param methodCreator    方法构造器
      * @param showSelectModels 需要构建的属性对象列表
      * @return 构建字符串
      */
@@ -82,7 +97,6 @@ public class CreateUtils {
     public static String createGetAttributeMethodContent(MethodCreator methodCreator, List<ShowSelectModel> showSelectModels) {
         // 将需要生成的方法写在StringBuilder里
         StringBuilder methodStringBuilder = new StringBuilder();
-        int size = showSelectModels.size();
         //如果是继承父类方法或实现接口方法 插入@Override
         boolean isParentMethod = isSupperMethod(methodCreator.getmTargetClass(), methodCreator.getGetPsiMethod());
         boolean isInterfaceMethod = isInterfaceMethod(methodCreator.getGetPsiMethod());
@@ -115,9 +129,9 @@ public class CreateUtils {
      */
     public static StringBuilder appendSetAttributeFeild(StringBuilder methodStringBuilder, String feildName, String typeName) {
         String upFeildName = captureName(feildName);
-        methodStringBuilder.append("if (\"");
-        methodStringBuilder.append(feildName);
-        methodStringBuilder.append("\".equals(attributeName)){\n");
+        methodStringBuilder.append("if (");
+        methodStringBuilder.append("ATTRIBUTE_" + feildName.toUpperCase());
+        methodStringBuilder.append(".equals(attributeName)){\n");
         methodStringBuilder.append("\tset");
         methodStringBuilder.append(upFeildName);
         methodStringBuilder.append("((");
@@ -136,9 +150,9 @@ public class CreateUtils {
      */
     public static StringBuilder appendGetAttributeFeild(StringBuilder methodStringBuilder, String feildName) {
         String upFeildName = captureName(feildName);
-        methodStringBuilder.append("if (\"");
-        methodStringBuilder.append(feildName);
-        methodStringBuilder.append("\".equals(attributeName)){\n");
+        methodStringBuilder.append("if (");
+        methodStringBuilder.append("ATTRIBUTE_" + feildName.toUpperCase());
+        methodStringBuilder.append(".equals(attributeName)){\n");
         methodStringBuilder.append("\treturn get");
         methodStringBuilder.append(upFeildName);
         methodStringBuilder.append("();\n");
@@ -163,7 +177,7 @@ public class CreateUtils {
      * @return 变换后文件名字符串
      */
     public static String deteleFileExtension(String name) {
-        String afterNames[] = name.split("\\.");
+        String[] afterNames = name.split("\\.");
         return afterNames[0];
     }
 
@@ -175,7 +189,7 @@ public class CreateUtils {
      * @return true 包含 false不包含
      */
     public static boolean containsSetAttributeAtMethod(MethodCreator methodCreator, PsiClass mTargetClass, String methodName) {
-        PsiMethod methods[] = mTargetClass.getAllMethods();
+        PsiMethod[] methods = mTargetClass.getAllMethods();
         int repeatParameterNum = 0;
         //遍历方法
         for (PsiMethod method : methods) {
@@ -221,7 +235,7 @@ public class CreateUtils {
      * @return true 包含 false不包含
      */
     public static boolean containGetAttributeAtMethod(MethodCreator methodCreator, PsiClass mTargetClass, String methodName) {
-        PsiMethod methods[] = mTargetClass.getAllMethods();
+        PsiMethod[] methods = mTargetClass.getAllMethods();
         int repeatParameterNum = 0;
         //遍历方法
         for (PsiMethod method : methods) {

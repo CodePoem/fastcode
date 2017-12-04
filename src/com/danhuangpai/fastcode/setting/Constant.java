@@ -1,5 +1,11 @@
 package com.danhuangpai.fastcode.setting;
 
+/**
+ * 全局静态变量类
+ *
+ * @author danhuangpai
+ * @version 1.0.0 created at 2017/12/4 16:58
+ */
 public class Constant {
 
     /**
