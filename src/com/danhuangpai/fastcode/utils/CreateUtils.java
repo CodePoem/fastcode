@@ -112,7 +112,7 @@ public class CreateUtils {
             if (i != 0) {
                 methodStringBuilder.append(" else ");
             }
-            appendGetAttributeFeild(methodStringBuilder, showSelectModels.get(i).getmFieldName());
+            appendGetAttributeFeild(methodStringBuilder, showSelectModels.get(i).getmFieldName(), showSelectModels.get(i).getType());
         }
         methodStringBuilder.append("\nreturn null;");
         methodStringBuilder.append("\n}\n");
@@ -146,14 +146,19 @@ public class CreateUtils {
      *
      * @param methodStringBuilder 添加前构造内容StringBuilder
      * @param feildName           属性名
+     * @param typeName            类型名
      * @return 添加后构造内容StringBuilder
      */
-    public static StringBuilder appendGetAttributeFeild(StringBuilder methodStringBuilder, String feildName) {
+    public static StringBuilder appendGetAttributeFeild(StringBuilder methodStringBuilder, String feildName, String typeName) {
         String upFeildName = captureName(feildName);
         methodStringBuilder.append("if (");
         methodStringBuilder.append("ATTRIBUTE_" + feildName.toUpperCase());
         methodStringBuilder.append(".equals(attributeName)){\n");
-        methodStringBuilder.append("\treturn get");
+        if ("boolean".equals(typeName)){
+            methodStringBuilder.append("\treturn is");
+        }else {
+            methodStringBuilder.append("\treturn get");
+        }
         methodStringBuilder.append(upFeildName);
         methodStringBuilder.append("();\n");
         methodStringBuilder.append("}");

@@ -5,7 +5,9 @@ import com.danhuangpai.fastcode.model.MyAbstractTableModel;
 import com.danhuangpai.fastcode.model.ShowSelectModel;
 import com.danhuangpai.fastcode.struct.FieldsCreator;
 import com.danhuangpai.fastcode.struct.MethodCreator;
+import com.danhuangpai.fastcode.utils.CreateUtils;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 
 import javax.swing.*;
@@ -136,11 +138,25 @@ public class FieldsDialog extends JDialog {
         // add your code here
         //对勾选操作 过滤属性数据
         makeSureShowList();
-        // 生成属性静态字符串变量
-        new FieldsCreator(mShowSelectModels, mProject, mTargetClass, mFactory, mFile).execute();
-        // 生成方法代码
-        new MethodCreator(mShowSelectModels, mProject, mTargetClass, mFactory, mFile).execute();
-        dispose();
+        // 生成属性静态字符串变量执行器
+        FieldsCreator fieldsCreator = new FieldsCreator(mShowSelectModels, mProject, mTargetClass, mFactory, mFile);
+        // 生成方法代码执行器
+        MethodCreator methodCreator = new MethodCreator(mShowSelectModels, mProject, mTargetClass, mFactory, mFile);
+        //判断包含关系 必须先进行这步操作
+        boolean isContainsGetMethod = CreateUtils.containGetAttributeAtMethod(methodCreator, mTargetClass, "getAttribute");
+        boolean isContainsSetMethod = CreateUtils.containsSetAttributeAtMethod(methodCreator, mTargetClass, "setAttribute");
+        if (isContainsGetMethod) {
+            Messages.showMessageDialog("getAttributeMethod is repeated!", "Hint Message", null);
+        }
+        if (isContainsSetMethod) {
+            Messages.showMessageDialog("setAttributeMethod is repeated!", "Hint Message", null);
+        }
+        //getAttribute方法 setAttribute方法 至少有一个不重复才执行生成操作
+        if (!isContainsGetMethod || !isContainsSetMethod) {
+            fieldsCreator.execute();
+            methodCreator.execute();
+            dispose();
+        }
     }
 
     private void onCancel() {

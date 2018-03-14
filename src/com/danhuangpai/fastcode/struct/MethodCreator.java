@@ -80,27 +80,20 @@ public class MethodCreator extends WriteCommandAction.Simple {
     @Override
     protected void run() throws Throwable {
 
-        //判断包含关系 必须先进行这步操作
-        boolean isContainsGetMethod = CreateUtils.containGetAttributeAtMethod(this, mTargetClass, "getAttribute");
-        boolean isContainsSetMethod = CreateUtils.containsSetAttributeAtMethod(this, mTargetClass, "setAttribute");
-
         // 获取所有属性
         PsiField[] fields = mTargetClass.getAllFields();
         // 筛选属性
         List<PsiField> psiFieldList = CreateUtils.filterPsiField(fields);
 
-        if (!isContainsGetMethod) {
-            // 生成getAttribute方法模版代码
-            String getAttributeMethodString = CreateUtils.createGetAttributeMethodContent(this, mShowSelectModels);
-            // 将代码添加到当前类里
-            mTargetClass.add(mFactory.createMethodFromText(getAttributeMethodString, mTargetClass));
-        }
-        if (!isContainsSetMethod) {
-            // 生成setAttribute模版代码
-            String setAttributeMethodString = CreateUtils.createSetAttributeMethodContent(this, mShowSelectModels);
-            // 将代码添加到当前类里
-            mTargetClass.add(mFactory.createMethodFromText(setAttributeMethodString, mTargetClass));
-        }
+        // 生成getAttribute方法模版代码
+        String getAttributeMethodString = CreateUtils.createGetAttributeMethodContent(this, mShowSelectModels);
+        // 将代码添加到当前类里
+        mTargetClass.add(mFactory.createMethodFromText(getAttributeMethodString, mTargetClass));
+
+        // 生成setAttribute模版代码
+        String setAttributeMethodString = CreateUtils.createSetAttributeMethodContent(this, mShowSelectModels);
+        // 将代码添加到当前类里
+        mTargetClass.add(mFactory.createMethodFromText(setAttributeMethodString, mTargetClass));
 
         // 导入需要的类
         JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(mProject);
